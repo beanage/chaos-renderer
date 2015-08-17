@@ -5,15 +5,15 @@ set(CMAKE_BUILD_TYPE Debug)
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 
-add_executable(main
-	main.cpp
-	chaos-renderer.cpp
+add_executable(demo
+	src/main.cpp
+	src/chaos-renderer.cpp
 )
 
-target_link_libraries(main
+target_link_libraries(demo
 	${OPENGL_LIBRARIES}
 	GLEW
 	SDL2
 )
 
-target_compile_features(main PRIVATE cxx_range_for)
+target_compile_features(demo PRIVATE cxx_range_for)
