@@ -1,5 +1,4 @@
 #include <iostream>
-#include <OpenGL/gl.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <glm/mat4x4.hpp>
@@ -14,7 +13,7 @@ int main(int argc, char const *argv[])
 {
 	try {
 		if (SDL_Init(SDL_INIT_VIDEO) < 0)
-			cout << "Couldnot init video.";
+			cout << "Could not init video.";
 		
 		renderer game_renderer(640, 480);
 		renderer::mesh2d test_mesh({
@@ -25,7 +24,6 @@ int main(int argc, char const *argv[])
 
 		SDL_StartTextInput();
 		bool quit = false;
-		float rotate = .0f;
 		while(!quit)
 		{
 			SDL_Event e;

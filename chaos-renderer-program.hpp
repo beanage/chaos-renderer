@@ -7,8 +7,6 @@
 using namespace std;
 using namespace chaos;
 
-/*-------------- shader helper ----------------*/
-
 namespace chaos
 {
 	template <class T>

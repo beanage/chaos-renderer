@@ -3,6 +3,8 @@
 #define __CHAOS_RENDERER_H_INCLUDED__
 
 #include <vector>
+#include <memory>
+#include <glm/mat4x4.hpp>
 
 namespace chaos
 {

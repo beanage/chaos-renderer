@@ -1,6 +1,10 @@
+#if __APPLE__
+	#include <OpenGL/gl3.h>
+#else
+	#include <GL/glew.h>
+	#include <GL/gl.h>
+#endif
 #include <SDL2/SDL.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/gl3.h>
 #include <exception>
 #include <map>
 #include <string>
@@ -16,7 +20,7 @@ using namespace chaos;
 
 static const char* const default_vert_shader = R"X(
 	#version 330
-	layout(location=0)in vec2 vert;
+	layout(location=0) in vec2 vert;
 
 	uniform mat4 model;
 	uniform mat4 view;
@@ -64,41 +68,49 @@ struct renderer::mesh2d::impl
 
 renderer::renderer(int width, int height) : _impl(new impl)
 {
-	//if(SDL_Init(SDL_INIT_VIDEO) < 0)
-	//	throw runtime_error("Failed to video.");
-
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	resize_window(width, height);
+
 	_impl->main.compile();
-	glm::mat4 ortho = glm::ortho(.0f, static_cast<float>(width), static_cast<float>(height), .0f);
-	_impl->main["projection"] = ortho;
-	for(int i = 0; i < 4; ++i) {
-		for(int j = 0; j < 4; ++j)
-			cout << ortho[j][i] << " | ";
-		cout << endl;
-	}
+	_impl->main["projection"] = glm::ortho(.0f, static_cast<float>(width), static_cast<float>(height), .0f);
 	_impl->main["view"] = _impl->view;
 }
 
 renderer::~renderer()
 {}
 
+static void init_glew()
+{
+#if !__APPLE__
+	glewExperimental = GL_TRUE;
+	GLenum glew_error = glewInit();
+	if (glew_error != GLEW_OK)
+		throw runtime_error("Glew initialization failed.");
+
+	if (!GLEW_VERSION_3_3)
+		throw runtime_error("OpenGL version < 3.3.");
+#endif
+}
+	
 void renderer::resize_window(int width, int height)
 {
 	SDL_DestroyWindow(_impl->window);
 	_impl->window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 	if(!_impl->window)
 		throw runtime_error("Failed to sdl.");
+
 	_impl->context = SDL_GL_CreateContext(_impl->window);
-    if(!_impl->context)
-        throw runtime_error(SDL_GetError());
-	
+	if(!_impl->context)
+		throw runtime_error(SDL_GetError());
+
+	init_glew();
+
 	if(SDL_GL_SetSwapInterval(1) < 0)
 		throw runtime_error(SDL_GetError());
-	
+
 	if(_impl->main.program_id != 0)
 		_impl->main["projection"] = glm::ortho(.0f, static_cast<float>(width), static_cast<float>(height), .0f);
 }

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
+set(CMAKE_BUILD_TYPE Debug)
 
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
@@ -11,6 +12,7 @@ add_executable(main
 
 target_link_libraries(main
 	${OPENGL_LIBRARIES}
+	GLEW
 	SDL2
 )
 
