@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "chaos-renderer.hpp"
+#include "chaos-texture.hpp"
 
 using namespace std;
 using namespace chaos;
@@ -17,10 +18,16 @@ int main(int argc, char const *argv[])
 		
 		renderer game_renderer(640, 480);
 		renderer::mesh2d test_mesh({
-			0.0,   0.0,
-			100.0, 0.0,
-			0.0, 100.0,
+			{{0.0,   0.0}, {0.0, 0.0}},
+			{{100.0, 0.0}, {1.0, 0.0}},
+			{{0.0, 100.0}, {0.0, 1.0}},
+			
+			{{100.0, 0.0},   {1.0, 0.0}},
+			{{100.0, 100.0}, {1.0, 1.0}},
+			{{0.0, 100.0},   {0.0, 1.0}},
 		});
+
+		texture2d tex("test.bmp");
 
 		SDL_StartTextInput();
 		bool quit = false;
@@ -32,8 +39,8 @@ int main(int argc, char const *argv[])
 			int mx, my;
 			SDL_GetMouseState(&mx, &my);
 			
-			for (int i = 0; i < 20; ++i)
-				game_renderer.render(test_mesh, glm::rotate(glm::translate(glm::mat4(), glm::vec3(mx, my, 0.0f)), static_cast<float>(i) * (360.0f / 20.0f), glm::vec3(0, 0, 1.0f)) );
+			tex.bind();
+			game_renderer.render(test_mesh, glm::translate(glm::mat4(), glm::vec3(mx, my, 0.0f)));
 			
 			while(SDL_PollEvent(&e) != 0)
 				if(e.type == SDL_QUIT)

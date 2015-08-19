@@ -1,9 +1,4 @@
-#if __APPLE__
-	#include <OpenGL/gl3.h>
-#else
-	#include <GL/glew.h>
-	#include <GL/gl.h>
-#endif
+#include "chaos-plattform-gl.hpp"
 #include <SDL2/SDL.h>
 #include <exception>
 #include <map>
@@ -13,7 +8,7 @@
 #include <glm/mat4x4.hpp>
 
 #include "chaos-renderer.hpp"
-#include "chaos-renderer-program.hpp"
+#include "chaos-renderer-program.inl"
 
 using namespace std;
 using namespace chaos;
@@ -21,12 +16,16 @@ using namespace chaos;
 static const char* const default_vert_shader = R"X(
 	#version 330
 	layout(location=0) in vec2 vert;
+	layout(location=1) in vec2 vert_uv;
+	out vec2 frag_uv;
 
 	uniform mat4 model;
 	uniform mat4 view;
 	uniform mat4 projection;
 
 	void main() {
+		frag_uv = vert_uv;
+
 		gl_Position = vec4(vert.x, vert.y, 0, 1);
 		gl_Position *= model;
 		gl_Position *= view;
@@ -36,9 +35,13 @@ static const char* const default_vert_shader = R"X(
 
 static const char* const default_frag_shader = R"X(
 	#version 330
+	in vec2 frag_uv;
 	out vec4 color;
+
+	uniform sampler2D tex;
+
 	void main() {
-		color = vec4(1.0, 1.0, 1.0, 1.0);
+		color = texture(tex, frag_uv);
 	}
 )X";
 
@@ -77,6 +80,7 @@ renderer::renderer(int width, int height) : _impl(new impl)
 	_impl->main.compile();
 	_impl->main["projection"] = glm::ortho(.0f, static_cast<float>(width), static_cast<float>(height), .0f);
 	_impl->main["view"] = _impl->view;
+	_impl->main["tex"] = 0;
 }
 
 renderer::~renderer()
@@ -129,19 +133,19 @@ void renderer::flip()
 	SDL_GL_SwapWindow(_impl->window);
 }
 
-renderer::mesh2d::mesh2d(std::initializer_list<float> const& vertices) : _impl(new impl())
+renderer::mesh2d::mesh2d(std::initializer_list<mesh2d::vertex> vertices) : _impl(new impl())
 {
-	vector<float> buffer(vertices);
-	if(buffer.size() % 2 != 0)
-		throw runtime_error("Invalid data for 2d mesh.");
+	vector<mesh2d::vertex> buffer(vertices);
 	
-	_impl->index_buffer_size = buffer.size()/2;
+	_impl->index_buffer_size = buffer.size();
+
 	vector<GLuint> indices(_impl->index_buffer_size, 0);
-	for(unsigned int i = 0; i < _impl->index_buffer_size; ++i) indices[i] = i;
+	for(unsigned int i = 0; i < _impl->index_buffer_size; ++i)
+		indices[i] = i;
 	
 	glGenBuffers(1, &_impl->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, _impl->vbo);
-	glBufferData(GL_ARRAY_BUFFER, buffer.size() * sizeof(GLfloat), &buffer[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, buffer.size() * sizeof(mesh2d::vertex), &buffer[0], GL_STATIC_DRAW);
 	
 	//glGenBuffers(1, &_impl->ibo);
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _impl->ibo);
@@ -150,7 +154,9 @@ renderer::mesh2d::mesh2d(std::initializer_list<float> const& vertices) : _impl(n
 	glGenVertexArrays(1, &_impl->vao);
 	glBindVertexArray(_impl->vao);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), 0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(mesh2d::vertex), 0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(mesh2d::vertex), reinterpret_cast<const GLvoid*>(sizeof(mesh2d::vertex::pos)));
 }
 
 renderer::mesh2d::~mesh2d()
@@ -160,14 +166,14 @@ renderer::mesh2d::~mesh2d()
 	glDeleteVertexArrays(1, &_impl->vao);
 }
 
+unsigned int renderer::mesh2d::size() const
+{
+	return _impl->index_buffer_size;
+}
+
 void renderer::mesh2d::bind() const
 {
 	glBindVertexArray(_impl->vao);
-}
-
-size_t renderer::mesh2d::size() const
-{
-	return _impl->index_buffer_size;
 }
 
 void renderer::begin()
@@ -177,10 +183,12 @@ void renderer::begin()
 	
 	_impl->main();
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 }
 
 void renderer::end()
 {
+	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(0);
 	flip();
 }

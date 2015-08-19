@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <glm/mat4x4.hpp>
+#include <glm/vec2.hpp>
 
 namespace chaos
 {
@@ -13,6 +14,7 @@ namespace chaos
 		friend struct scoped_renderer;
 	public:
 		class mesh2d;
+		class texture2d;
 
 		renderer(int width, int height);
 		~renderer();
@@ -35,13 +37,19 @@ namespace chaos
 	{
 		friend class renderer;
 	public:
-		mesh2d(std::initializer_list<float> const& vertices);
+		struct vertex
+		{
+			glm::vec2 pos;
+			glm::vec2 uv;
+		};
+
+		mesh2d(std::initializer_list<vertex> vertices);
 		~mesh2d();
+
+		unsigned int size() const;
 
 	private:
 		void bind() const;
-		
-		size_t size() const;
 
 		struct impl;
 		std::unique_ptr<impl> _impl;
