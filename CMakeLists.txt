@@ -8,6 +8,7 @@ include_directories(${OPENGL_INCLUDE_DIR})
 add_executable(demo
 	src/main.cpp
 	src/chaos-renderer.cpp
+	src/chaos-fps-limiter.cpp
 	src/chaos-texture.cpp
 	src/stb/stb_image.c
 )

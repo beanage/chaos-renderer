@@ -6,6 +6,7 @@
 
 #include "chaos-renderer.hpp"
 #include "chaos-texture.hpp"
+#include "chaos-fps-limiter.hpp"
 
 using namespace std;
 using namespace chaos;
@@ -29,6 +30,8 @@ int main(int argc, char const *argv[])
 
 		texture2d tex("test.bmp");
 
+		fps_limiter fps(60);
+
 		SDL_StartTextInput();
 		bool quit = false;
 		while(!quit)
@@ -45,6 +48,10 @@ int main(int argc, char const *argv[])
 			while(SDL_PollEvent(&e) != 0)
 				if(e.type == SDL_QUIT)
 					quit = true;
+
+			cout << fps.fps() << endl;
+
+			fps.wait();
 		}
 		SDL_StopTextInput();
 	} catch (runtime_error const& e) {
